@@ -293,6 +293,18 @@ idMatrix : {n : Nat} -> Matrix n n Nat
 \end{spec}
 \end{exe}
 
+\begin{exe}[Matrix Multiplication]
+Define matrix multiplication. There are lots of ways to do this.
+Some involve defining scalar product, first.
+%format *M = "\mathbin{\F{\times_M}}"
+%format _*M_ = "\_\!" *M "\!\_"
+\begin{spec}
+_*M_ :  {l m n : Nat} -> Matrix l m Nat -> Matrix m n Nat -> Matrix l n Nat
+\end{spec}
+\end{exe}
+
+
+
 
 \subsection{Unit and Sigma types}
 
@@ -386,8 +398,6 @@ vapP (<> , <>)        (<> , <>)       = <> , <>
 vapP ((f , fs) , <>)  ((s , ss) , p)  = (f s , vap (fs , ?) (ss , ?)) , ?
 \end{spec}
 
-
-\subsection{Exercises}
 
 
 
