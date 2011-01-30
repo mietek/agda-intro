@@ -53,6 +53,7 @@
 \newcommand{\C}[1]{\red{\mathsf{#1}}}
 \newcommand{\F}[1]{\green{\mathsf{#1}}}
 \newcommand{\V}[1]{\purple{\mathit{#1}}}
+\newcommand{\T}[1]{\raisebox{0.02in}{\tiny\green{\textsc{#1}}}}
 
 %include lhs2TeX.fmt
 %include lhs2TeX.sty
@@ -64,6 +65,8 @@
 
 %format -> = "\blue{\rightarrow}"
 
+\newcommand{\nudge}[1]{\marginpar{\footnotesize #1}}
+\newtheorem{exe}{Exercise}[chapter]
 
 \begin{document}
 
@@ -73,6 +76,9 @@
 
 %include VecFin.lagda
 
+%include Lambda.lagda
+
+%include View.lagda
 
 \bibliographystyle{plainnat}
 \bibliography{dtp.bib}
