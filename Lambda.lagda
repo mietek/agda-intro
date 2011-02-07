@@ -201,20 +201,19 @@ Sub m n = (w : Nat) -> Fin (w +a m) -> Tm (w +a n)
 be the type of substitions which can be weakened.
 Define
 %format subw = "\F{subw}"
-\begin{code}
+\begin{spec}
 subw : {m n : Nat} -> Sub m n -> Tm m -> Tm n
-subw sig (var i) = sig zero i
-subw sig (f $ a) = subw sig f $ subw sig a
-subw sig (lam b) = lam (subw (\ w -> sig (suc w)) b)
-\end{code}
+\end{spec}
 Now show how to turn a renaming into a |Sub|.
 %format renSub = "\F{renSub}"
-\begin{code}
+\begin{spec}
 renSub : {m n : Nat} -> (Fin m -> Fin n) -> Sub m n
-renSub f zero = \ i -> var (f i)
-renSub f (suc i) = renSub (weaken f) i
-\end{code}
+\end{spec}
 Finally, show how to turn a simultaneous substitution into a |Sub|.
+%format subSub = "\F{subSub}"
+\begin{spec}
+subSub : {m n : Nat} -> (Fin m -> Tm n) -> Sub m n
+\end{spec}
 \end{exe}
 
 
