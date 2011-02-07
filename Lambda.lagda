@@ -19,6 +19,9 @@ I'm revisiting chapter 7 of my thesis here.
 %format _$_ = "\_\!" $ "\!\_"
 %format lam = "\C{lam}"
 
+
+Here are the $\lambda$-terms with |n| available de Bruijn indices~\citep{deBruijn:dummies}.
+
 \begin{code}
 data Tm (n : Nat) : Set where
   var   : Fin n ->         Tm n
@@ -55,6 +58,10 @@ ssub {m}{n} sig (lam b) = lam (ssub sig' b) where
   sig' zero     = var zero
   sig' (suc i)  = ssub (\ i -> var (suc i)) (sig i)
 \end{spec}
+
+At this point, Thorsten Altenkirch and Bernhard Reus~\citep{DBLP:conf/csl/AltenkirchR99}
+reached for the hammer of wellordering, but there's a cheaper way to
+get out of the jam.
 
 
 \section{Simultaneous Renaming and Substitution}
@@ -123,10 +130,98 @@ act k tau (lam b)  = lam (act k (wk k tau) b)
 \end{code}
 
 
+\subsection{Exercises}
+
+\begin{exe}[Renaming Kit]
+Define the renamimg kit.
+%format renk = "\F{renk}"
+\begin{spec}
+renk : Kit Fin
+\end{spec}
+\end{exe}
+
+\begin{exe}[Substitution Kit]
+Define the substitution kit.
+%format subk = "\F{subk}"
+\begin{spec}
+subk : Kit Tm
+\end{spec}
+\end{exe}
+
+\begin{exe}[Substitute |zero|]
+\begin{spec}
+sub0 : {n : Nat} -> Tm n -> Tm (suc n) -> Tm n
+\end{spec}
+\end{exe}
+
+\begin{exe}[Reduce One]
+Define a function to contract the leftmost redex in a $\lambda$-term, if there is one.
+%format leftRed = "\F{leftRed}"
+\begin{spec}
+leftRed : {n : Nat} -> Tm n -> Maybe (Tm n)
+\end{spec}
+\end{exe}
+
+\begin{exe}[Complete Development]
+Show how to compute the complete development of a $\lambda$-term, contracting all its
+visible redexes in parallel (but not the redexes which thus arise).
+%format develop = "\F{develop}"
+\begin{spec}
+develop : {n : Nat} -> Tm n -> Tm n
+\end{spec}
+\end{exe}
+
+\begin{exe}[Gasoline Alley]
+Write an iterator, computing the |n|-fold self-composition of an endofunction, effectively
+interpreting each |Nat| as its corresponding Church numeral.
+%format iterate = "\F{iterate}"
+\begin{spec}
+iterate : Nat -> {X : Set} -> (X -> X) -> X -> X
+\end{spec}
+You can use |iterate| and |develop| to run $\lambda$-terms for as many steps as you like,
+as long as you are modest in your likes.
+\end{exe}
+
+\begin{exe}[Another Substitution Recipe]
+It occurred to me at time of writing that one might cook substitution differently.
+Using abacus-style addition
+%format +a = "\mathbin{\F{+_a}}"
+%format _+a_ = "\_\!" +a "\!\_"
+\begin{code}
+_+a_ : Nat -> Nat -> Nat
+zero   +a n  = n
+suc m  +a n  = m +a suc n
+\end{code}
+let
+%format Sub = "\F{Sub}"
+\begin{code}
+Sub : Nat -> Nat -> Set
+Sub m n = (w : Nat) -> Fin (w +a m) -> Tm (w +a n)
+\end{code}
+be the type of substitions which can be weakened.
+Define
+%format subw = "\F{subw}"
+\begin{code}
+subw : {m n : Nat} -> Sub m n -> Tm m -> Tm n
+subw sig (var i) = sig zero i
+subw sig (f $ a) = subw sig f $ subw sig a
+subw sig (lam b) = lam (subw (\ w -> sig (suc w)) b)
+\end{code}
+Now show how to turn a renaming into a |Sub|.
+%format renSub = "\F{renSub}"
+\begin{code}
+renSub : {m n : Nat} -> (Fin m -> Fin n) -> Sub m n
+renSub f zero = \ i -> var (f i)
+renSub f (suc i) = renSub (weaken f) i
+\end{code}
+Finally, show how to turn a simultaneous substitution into a |Sub|.
+\end{exe}
+
+
 %if False
 What to prove?
 
-\begin{code}
+\begin{spec}
 record GoodKit {I : Nat -> Set}(k : Kit I) : Set where
   constructor mkGoodKit
   field
@@ -137,7 +232,7 @@ record GoodKit {I : Nat -> Set}(k : Kit I) : Set where
     mktmkv  : {n : Nat}(i : Fin n) -> mkt k (mkv k i) == var i
     wkisuc  : {n : Nat}(i : Fin n) -> wki k (mkv k i) == mkv k (suc i)
 open GoodKit public
-\end{code}
+\end{spec}
 
 \begin{spec}
 wkId : {I : Nat -> Set}{k : Kit I}(gk : GoodKit k)
@@ -158,7 +253,7 @@ actId k gk (f $ a)  rewrite actId k gk f | actId k gk a = <>
 actId k gk (lam b)  = yuk
 \end{spec}
 
-\begin{code}
+\begin{spec}
 _^=_ : {S T : Set} -> (S -> T) -> (S -> T) -> Set
 f ^= g = (s : _) -> f s == g s
 
@@ -205,9 +300,9 @@ actComp {I}{k}  gk f g (lam b)
               (wk k (\ i -> acti gk f (g i))) (wkComp gk f g) b
   = <>
 
-\end{code}
+\end{spec}
 
-\begin{code}
+\begin{spec}
 renK : Kit Fin
 renK = mkKit ic var suc
 
@@ -243,5 +338,5 @@ subGK = record
   }
 
 
-\end{code}
+\end{spec}
 %endif

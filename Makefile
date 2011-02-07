@@ -6,7 +6,7 @@ dtp.tex : dtp.lagda VecFin.lagda Lambda.lagda View.lagda
 dtp.aux : dtp.tex
 	latex dtp
 
-dtp.blg : dtp.aux
+dtp.blg : dtp.aux dtp.bib
 	bibtex dtp
 
 dtp.dvi : dtp.tex dtp.blg
