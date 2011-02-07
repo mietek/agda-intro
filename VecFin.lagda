@@ -64,10 +64,15 @@ shall we express this property?
 \nudge{The number of c's in |suc| is a long standing area of open
 warfare.}
 \nudge{Agda users tend to use lowercase-vs-uppercase to distinguish things in |Set|s from things which are or manipulate |Set|s.}
+\nudge{The pragmas let you use decimal numerals.}
 \begin{code}
 data Nat : Set where
   zero  :         Nat
   suc   : Nat ->  Nat
+
+{-# BUILTIN NATURAL Nat #-}
+{-# BUILTIN ZERO zero #-}
+{-# BUILTIN SUC suc #-}
 \end{code}
 
 %format length = "\F{length}"
@@ -215,6 +220,7 @@ vrevapp (x , xs)  ys = --|{! vrevapp xs (x , ys) !}|
 
 \nudge{Which other things work badly? Filter?}
 
+This is the `traverse' function from the `idiom paper'~\citep{}
 %format vtraverse = "\F{vtraverse}"
 \nudge{I wanted to make |_/_| left-associative, but no such luck.}
 \begin{code}
