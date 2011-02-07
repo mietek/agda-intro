@@ -13,6 +13,7 @@ open import VecFin
 
 I'm revisiting chapter 7 of my thesis here.
 
+%format forall = "\D{\forall}"
 %format Tm = "\D{Tm}"
 %format var = "\C{var}"
 %format $ = "\C{\$}"
@@ -339,3 +340,104 @@ subGK = record
 
 \end{spec}
 %endif
+
+
+\subsection{Simply Typed Lambda Calculus}
+
+Altenkirch and Reus carry on to develop simultaneous type-preserving
+substitution for the \emph{simply-typed} \(\lambda\)-calculus. Let's see how.
+
+%format Ty = "\D{Ty}"
+%format iota = "\C{\upiota}"
+%format >> = "\C{\vartriangleright}"
+%format _>>_ = "\_\!" >> "\!\_"
+%format Context = "\D{Context}"
+%format !- = "\D{\vdash}"
+%format _!-_ = "\_\!" !- "\!\_"
+%format -! = "\D{\dashv}"
+%format _-!_ = "\_\!" -! "\!\_"
+\begin{code}
+infixr 4 _>>_
+infixr 3 _!-_
+infixr 3 _-!_
+infixr 4 _,_
+\end{code}
+
+\begin{code}
+data Ty : Set where
+  iota  :                Ty
+  _>>_  : (S T : Ty) ->  Ty
+\end{code}
+
+\begin{code}
+data Context : Set where
+  <>   : Context
+  _,_  : (G : Context)(S : Ty) -> Context
+\end{code}
+
+\begin{code}
+data _-!_ : Context -> Ty -> Set where
+  zero  : forall {G T}                  -> G , T -! T
+  suc   : forall {G S T}  (x : G -! T)  -> G , S -! T
+\end{code}
+
+\begin{code}
+data _!-_ : Context -> Ty -> Set where
+
+  var  : forall {G T}            (x : G -! T)
+                          ->   ----------------
+                                 G !- T
+
+  -- $\lambda$-abstraction extends the context
+
+  lam  : forall {G S T}          (b : G , S !- T)
+                          ->   --------------------
+                                 G !- S >> T
+
+  -- application demands a type coincidence
+
+  _$_  : forall {G S T}         (f : G !- S >> T)   (s : G !- S)
+                          ->  ------------------------------------
+                                G !- T
+\end{code}
+
+%format < = "\F{\llbracket}"
+%format >T = "\F{\rrbracket_T}"
+%format <_>T = < "\_" >T
+%format >C = "\F{\rrbracket_C}"
+%format <_>C = < "\_" >C
+%format >v = "\F{\rrbracket_v}"
+%format <_>v = < "\_" >v
+%format >t = "\F{\rrbracket_t}"
+%format <_>t = < "\_" >t
+%format eval = "\F{eval}"
+%format example = "\F{example}"
+
+\begin{code}
+<_>T : Ty -> Set
+< iota >T    = Nat
+< S >> T >T  = < S >T -> < T >T
+\end{code}
+
+\begin{code}
+<_>C : Context -> Set
+< <> >C      = One
+< G , S >C   = < G >C * < S >T
+
+<_>v : forall {G T} -> G -! T -> < G >C -> < T >T
+< zero >v    (_ , t)  = t
+< suc i >v   (g , _)  = < i >v g
+
+<_>t : forall {G T} -> G !- T -> < G >C -> < T >T
+< var x >t  = < x >v
+< lam b >t  = \ g s -> < b >t (g , s)
+< f $ s >t  = \ g -> < f >t g (< s >t g)
+
+eval : forall {T} -> <> !- T -> < T >T
+eval t = < t >t <>
+\end{code}
+
+\begin{spec}
+example : <> !- _
+example = (lam (var zero)) $ lam (var zero)
+\end{spec}
