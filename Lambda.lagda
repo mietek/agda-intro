@@ -360,7 +360,6 @@ substitution for the \emph{simply-typed} \(\lambda\)-calculus. Let's see how.
 infixr 4 _>>_
 infixr 3 _!-_
 infixr 3 _-!_
-infixr 4 _,_
 \end{code}
 
 \begin{code}

@@ -39,6 +39,7 @@ data List (X : Set) : Set where
   <>    :                 List X
   _,_   : X -> List X ->  List X
 
+infixr 4 _,_
 \end{code}
 %endif
 
