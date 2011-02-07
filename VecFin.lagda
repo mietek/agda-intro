@@ -360,8 +360,15 @@ vconcR {suc m}  (x , xs)  ys = x , vconcR {m} xs ys
 data _==_ {X : Set}(x : X) : X -> Set where
   <> : x == x
 \end{code}
-%format len = "\F{len}"
 
+%if False
+\begin{code}
+{-# BUILTIN EQUALITY _==_ #-}
+{-# BUILTIN REFL <> #-}
+\end{code}
+%endif
+
+%format len = "\F{len}"
 \begin{code}
 len : {X : Set} -> List X -> Nat
 len <>        = zero
@@ -390,12 +397,13 @@ vcons : {X : Set}{n : Nat} -> X -> VecP X n -> VecP X (suc n)
 vcons x (xs , p) = (x , xs) ,  -- |{! !}|
 \end{spec}
 
+%format XX = "?"
 \nudge{But this really is toxic.}
 \begin{spec}
 vapP :  {n : Nat}{S T : Set} ->
         VecP (S -> T) n -> VecP S n -> VecP T n
 vapP (<> , <>)        (<> , <>)       = <> , <>
-vapP ((f , fs) , <>)  ((s , ss) , p)  = (f s , vap (fs , ?) (ss , ?)) , ?
+vapP ((f , fs) , <>)  ((s , ss) , p)  = (f s , vap (fs , XX) (ss , XX)) , XX
 \end{spec}
 
 
@@ -410,10 +418,20 @@ Here's a family of \emph{finite sets}, good to use as indices into vectors.
 %format Fin = "\D{Fin}"
 \begin{code}
 data Fin : Nat -> Set where
-  zero  : {n : Nat} ->           Fin (suc n)
-  suc   : {n : Nat} -> Fin n ->  Fin (suc n)
+  zero  : {n : Nat} ->                 Fin (suc n)
+  suc   : {n : Nat} -> (i : Fin n) ->  Fin (suc n)
 \end{code}
 
+Finite sets are sets of bounded numbers. One thing we may readily do is
+forget the bound.\nudge{Do you resent writing this function? You should.}
+%format fog = "\F{fog}"
+\begin{code}
+fog : {n : Nat} -> Fin n -> Nat
+fog zero     = zero
+fog (suc i)  = suc (fog i)
+\end{code}
+
+Now let's show how to give a total projection from a vector of known size.
 %format vproj = "\F{vproj}"
 \nudge{Here's our first Aunt Fanny. We could also swap the arguments around.}
 \begin{code}
@@ -425,3 +443,102 @@ vproj (x , xs)  (suc i)  = vproj xs i
 \nudge{It's always possible to give enough Aunt Fannies to satisfy the coverage
 checker.}
 
+Suppose we want to project at an index not known to be suitably bounded.
+How might we check the bound? We shall return to that thought, later.
+
+
+\subsection{Renamings}
+
+We'll shortly use |Fin| to type bounded sets of de Bruijn indices.
+Functions from one finite set to another will act as `renamings'.
+
+Extending the context with a new assumption is sometimes known as `weakening': making more
+assumptions weakens an argument.
+Suppose we have a function from |Fin m| to |Fin n|, renaming variables, as it were.
+How should weakening act on this function? Can we extend the function to
+the sets one larger, mapping the `new' source zero to the `new' target zero?
+This operation shows how to push a renaming under a binder.
+%format weaken = "\F{weaken}"
+\nudge{Categorists, what should we prove about |weaken|?}
+\begin{code}
+weaken : {m n : Nat} -> (Fin m -> Fin n) -> Fin (suc m) -> Fin (suc n)
+weaken f zero     = zero
+weaken f (suc i)  = suc (f i)
+\end{code}
+
+One operation we'll need corresponds to inserting a new variable somewhere in
+the context. This operation is known as `thinning'. Let's define the order-preserving
+injection from |Fin n| to |Fin (suc n)| which misses a given element
+%format thin = "\F{thin}"
+\begin{code}
+thin : {n : Nat} -> Fin (suc n) -> Fin n -> Fin (suc n)
+thin           zero      = suc
+thin {zero}    (suc ())
+thin {suc n}   (suc i)   = weaken (thin i)
+\end{code}
+
+
+
+
+\subsection{Finite Set Exercises}
+
+\begin{exe}[Tabulation] Invert |vproj|. Given a function from a |Fin| set, show
+how to construct the vector which tabulates it.
+%format vtab = "\F{vtab}"
+\begin{spec}
+vtab : {n : Nat}{X : Set} -> (Fin n -> X) -> Vec X n
+\end{spec}
+\end{exe}
+
+\begin{exe}[Plan a Vector] Show how to construct the `plan' of a
+vector---a vector whose elements each give their own position, counting up from
+|zero|.
+%format vplan = "\F{vplan}"
+\begin{spec}
+vplan : {n : Nat} -> Vec (Fin n) n
+\end{spec}
+\end{exe}
+
+\begin{exe}[Max a |Fin|] Every nonempty finite set has a smallest
+element |zero| and a largest element which has as many |suc|s as
+allowed. Construct the latter
+%format max = "\F{max}"
+\begin{spec}
+max : {n : Nat} -> Fin (suc n)
+\end{spec}
+\end{exe}
+
+\begin{exe}[Embed, Preserving |fog|] Give the embedding from one finite
+set to the next which preserves the numerical value given by |fog|.
+%format emb = "\F{emb}"
+\begin{spec}
+emb : {n : Nat} -> Fin n -> Fin (suc n)
+\end{spec}
+\end{exe}
+
+%format thick = "\F{thick}"
+%format Maybe = "\D{Maybe}"
+%format yes = "\C{yes}"
+%format no = "\C{no}"
+\begin{exe}[Thickening] Construct |thick i| the partial inverse of |thin i|. You'll
+need
+\begin{code}
+data Maybe (X : Set) : Set where
+  yes  : X ->  Maybe X
+  no   :       Maybe X
+\end{code}
+Which operations on |Maybe| will help? Discover and define them as you implement:
+\begin{spec}
+thick : {n : Nat} -> Fin (suc n) -> Fin (suc n) -> Maybe (Fin n)
+\end{spec}
+Note that |thick| acts as an inequality test.
+\end{exe}
+
+\begin{exe}[Order-Preserving Injections]
+%format OPI = "\D{OPI}"
+Define an inductive family \[|OPI : Nat -> Nat -> Set|\] such that |OPI m n| gives a unique
+first-order representation to exactly the order-preserving injections from |Fin m| to
+|Fin n|, and give
+the functional interpretation of your data. Show that |OPI| is closed under identity and
+composition.
+\end{exe}
