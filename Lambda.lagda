@@ -342,6 +342,36 @@ subGK = record
 %endif
 
 
+\subsection{How to Hide de Bruijn Indices}
+
+\begin{code}
+
+max : {n : Nat} -> Fin (suc n)
+max {zero}   = zero
+max {suc n}  = suc (max {n})
+
+embed : {n : Nat} -> Fin n -> Fin (suc n)
+embed zero     = zero
+embed (suc n)  = suc (embed n)
+
+\end{code}
+
+\begin{code}
+
+shifty : (m : Nat){n : Nat} -> Fin (suc (m +N n))
+shifty zero     = max
+shifty (suc m)  = embed (shifty m)
+
+lambda : {m : Nat} -> (({n : Nat} -> Tm (suc (m +N n))) -> Tm (suc m)) ->
+    Tm m
+lambda {m} f = lam (f \{n} -> var (shifty m {n}))
+
+myTest : Tm zero
+myTest = lambda \ f -> lambda \ x -> f $ (f $ x)
+
+\end{code}
+
+
 \subsection{Simply Typed Lambda Calculus}
 
 Altenkirch and Reus carry on to develop simultaneous type-preserving

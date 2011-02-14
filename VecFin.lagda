@@ -215,7 +215,7 @@ recursive and make |+V+| a stinker.}
 \begin{spec}
 vrevapp : {m n : Nat}{X : Set} -> Vec X m -> Vec X n -> Vec X (m +N n)
 vrevapp <>        ys = ys
-vrevapp (x , xs)  ys = --|{! vrevapp xs (x , ys) !}|
+vrevapp (x , xs)  ys = vrevapp xs (x , ys)
 \end{spec}
 
 \nudge{Which other things work badly? Filter?}
@@ -330,6 +330,18 @@ record One : Set where
 open One public
 \end{code}
 
+\begin{code}
+u0 : One
+u0 = <>
+
+u1 : One
+u1 = record { }
+
+u2 : One
+u2 = _
+
+\end{code}
+
 \nudge{The |field| keyword declares fields, we can also add `manifest' fields.}
 \begin{code}
 record Sg (S : Set)(T : S -> Set) : Set where
@@ -427,7 +439,13 @@ Here's a family of \emph{finite sets}, good to use as indices into vectors.
 data Fin : Nat -> Set where
   zero  : {n : Nat} ->                 Fin (suc n)
   suc   : {n : Nat} -> (i : Fin n) ->  Fin (suc n)
+
+foo : {X : Set}{n : Nat} -> Fin (zero +N zero) -> X
+foo ()
+
 \end{code}
+
+
 
 Finite sets are sets of bounded numbers. One thing we may readily do is
 forget the bound.\nudge{Do you resent writing this function? You should.}
@@ -443,15 +461,16 @@ Now let's show how to give a total projection from a vector of known size.
 \nudge{Here's our first Aunt Fanny. We could also swap the arguments around.}
 \begin{code}
 vproj : {n : Nat}{X : Set} -> Vec X n -> Fin n -> X
-vproj <>        ()
-vproj (x , xs)  zero     = x
-vproj (x , xs)  (suc i)  = vproj xs i
+vproj <> ()
+vproj (x , xs) zero     = x
+vproj (x , xs) (suc i)  = vproj xs i
 \end{code}
 \nudge{It's always possible to give enough Aunt Fannies to satisfy the coverage
 checker.}
 
 Suppose we want to project at an index not known to be suitably bounded.
 How might we check the bound? We shall return to that thought, later.
+
 
 
 \subsection{Renamings}
