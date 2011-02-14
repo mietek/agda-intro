@@ -344,6 +344,8 @@ subGK = record
 
 \subsection{How to Hide de Bruijn Indices}
 
+%format embed = "\F{embed}"
+
 \begin{code}
 
 max : {n : Nat} -> Fin (suc n)
@@ -356,14 +358,19 @@ embed (suc n)  = suc (embed n)
 
 \end{code}
 
+%format shifty = "\F{shifty}"
+%format lambda = "\F{lambda}"
+%format myTest = "\F{myTest}"
+
 \begin{code}
 
 shifty : (m : Nat){n : Nat} -> Fin (suc (m +N n))
 shifty zero     = max
 shifty (suc m)  = embed (shifty m)
 
-lambda : {m : Nat} -> (({n : Nat} -> Tm (suc (m +N n))) -> Tm (suc m)) ->
-    Tm m
+lambda :  {m : Nat} ->
+          (({n : Nat} -> Tm (suc (m +N n))) -> Tm (suc m)) ->
+          Tm m
 lambda {m} f = lam (f \{n} -> var (shifty m {n}))
 
 myTest : Tm zero
