@@ -579,8 +579,6 @@ new command-response strategies onto the leaves of old.
 Define |>>=| to graft strategy trees together.
 \begin{spec}
 _>>=_ : forall {S T} -> Eff S -> (S -> Eff T) -> Eff T
-ret x     >>= f = f x
-toss u k  >>= f = toss u \ b -> k b >>= f
 \end{spec}
 \end{exe}
 
