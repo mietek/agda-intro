@@ -506,7 +506,7 @@ example : <> !- _
 example = (lam (var zero)) $ lam (var zero)
 \end{spec}
 
-\subsection{Exercises}
+\subsection{An Exercise}
 
 \begin{exe}[Simultaneous Substitution]
 Using a technique of your choice and implementing auxiliary functions
@@ -520,6 +520,8 @@ tsub : forall {Gam Del}  -> (forall {T} -> Gam -! T -> Del !- T)
                          -> (forall {T} -> Gam !- T -> Del !- T)
 \end{spec}
 \end{exe}
+
+\subsection{Robbing Peter to Pay Paul}
 
 Based on Paul Blain Levy's \emph{call-by-push-value} calculus, here's
 a variation on the simply typed $\lambda$-calculus for you to play with
@@ -748,3 +750,133 @@ treating the |get| and |put| operations as reading and writing a
 |Nat|-valued state. Feel free to make |toss| work any way you like.
 \end{exe}
 
+Next, an exercise received with gratitude from Peter Hancock.
+
+\begin{exe}[Interlopers] Implement an operator which combines two
+communicating processes |alice : Eff One| and |bob : Eff X| to make a
+single demand-driven |Eff X| process. Here's the plan: |bob|'s
+activities should be prioritised; his |put|s should be |put| to the
+world, but his |get|s should come from |alice|'s |put|s; |alice|
+should run only when |bob| needs input, and should |get| from the
+world; if |alice| terminates before |bob| |ret|urns an |X|, |bob|
+should |get| the rest of his inputs directly from the world.
+
+Implement a similar but supply-driven combinator, connecting |bob :
+Eff X| and |charlie : Eff One|, where |charlie| |get|s in the way of
+|bob|'s |put|s.
+\end{exe}
+
+
+\subsection{Compare and Swap}
+
+Here's a little recursor for pairs of numbers, generalizing a
+pattern I learned from James McKinna.
+%format commRec = "\F{commRec}"
+\begin{code}
+commRec : {X : Set} -> (Nat -> X) -> (X -> X) -> Nat -> Nat -> X
+commRec z s  zero     n        = z n
+commRec z s  m        zero     = z m
+commRec z s  (suc m)  (suc n)  = s (commRec z s m n)
+\end{code}
+
+\begin{exe}[Commutativity] Show that |commRec z s| is commutative.
+%format commRecComm = "\F{commRecComm}"
+\begin{spec}
+commRecComm :  {X : Set}(z : Nat -> X)(s : X -> X)(m n : Nat) ->
+               commRec z s m n == commRec z s n m
+\end{spec}
+\end{exe}
+
+\begin{exe}[Arithmetic Operations] Implement addition and
+multiplication by suitably instantiating |commRec|. Multiplication
+is a bit tricky: you may find that you need to compute an extra quantity,
+alongside the product, in order to make the recursion go through.
+\end{exe}
+
+\begin{exe}[Comparison Operations] Implement maximum and
+minimum by suitably instantiating |commRec|. Implement the equality test.
+\end{exe}
+
+%format un = "\T{$\mathrm{V}$}"
+I finally gave in and defined the following operation to help with the
+next exercise. It's the `uncurry' operation, but with a dependent type
+which effectively makes it the \emph{dependent case analysis}
+principle for |Sg A B|: not only do you split a pair |ab| into pieces
+|a| and |b|, you also learn that |ab| is |a , b|. I write it as |un|
+as it depicts the splitting of one into two.
+
+\begin{code}
+un :  {A : Set}{B : A -> Set}{C : Sg A B -> Set} ->
+      ((a : A)(b : B a) -> C (a , b)) ->   -- two on top
+      (ab : Sg A B) -> C ab                -- one below
+un f ab = f (fst ab) (snd ab)
+\end{code}
+
+%format cas = "\F{cas}"
+\begin{exe}[Compare-and-swap]
+Use |commRec| to implement |cas|, the operation which sorts a pair of numbers
+into increasing order.
+\begin{spec}
+cas : Nat * Nat -> Nat * Nat
+\end{spec}
+\end{exe}
+
+But where is the $\lambda$-calculus? It's on its way. Here are today's
+\emph{linear} types.
+%format LTy = "\D{LTy}"
+%format -o = "\C{\multimap}"
+%format _-o_ = "\_\!" -o "\!\_"
+%format <X> = "\C{\otimes}"
+%format _<X>_ = "\_\!" <X> "\!\_"
+%format & = "\C{\&}"
+%format _&_ = "\_\!" & "\!\_"
+%format KEY = "\C{KEY}"
+%format LIST = "\C{LIST}"
+%format TREE = "\C{TREE}"
+\begin{code}
+data LTy : Set where
+  ONE TWO KEY      :                 LTy
+  LIST TREE        :         LTy ->  LTy
+  _-o_ _<X>_ _&_   : LTy ->  LTy ->  LTy
+\end{code}
+
+Let's consider a \emph{linear} context to be a list of |Maybe|-types
+which indicate availability.
+
+%format LCx = "\F{LCx}"
+\begin{code}
+LCx : Set
+LCx = Context (Maybe LTy)
+\end{code}
+
+We can make a variable reference record the usage by indexing by
+contexts, before and after.
+%format LTm = "\D{LTm}"
+%format Gam0 = "\V{\Gamma_0}"
+%format Gam1 = "\V{\Gamma_1}"
+%format Gam2 = "\V{\Gamma_2}"
+%format Gam3 = "\V{\Gamma_3}"
+%format Gam4 = "\V{\Gamma_4}"
+%format Gam5 = "\V{\Gamma_5}"
+%format LV = "\D{LV}"
+\begin{code}
+data LV : LCx -> LTy -> LCx -> Set where
+  zero  : forall {Gam T} ->                             LV (Gam , yes T) T (Gam , no)
+  suc   : forall {Gam0 Gam1 T S} ->  LV Gam0 T Gam1 ->  LV (Gam0 , S) T (Gam1 , S)
+\end{code}
+
+\begin{code}
+data LTm : LCx -> LTy -> LCx -> Set where
+  var  : forall {Gam0 Gam1 T} ->   LV Gam0 T Gam1 -> LTm Gam0 T Gam1
+  lam  : forall {Gam0 Gam1 S T} -> LTm (Gam0 , yes S) T (Gam1 , no) -> LTm Gam0 (S -o T) Gam1
+  _$_  : forall {Gam0 Gam1 Gam2 S T} -> LTm Gam0 (S -o T) Gam1 -> LTm Gam1 S Gam2 -> LTm Gam0 T Gam1
+\end{code}
+
+Sorry folks, I've got to stop preparing this exercise and prepare the
+lectures instead. I'll finish it later, but let me tell you where it's
+going. The plan is to deliver a domain-specific language for
+transforming containers which neither copy nor delete elements, so
+that a function of type |LIST KEY -o LIST KEY| must deliver as output a
+permutation of its input. Equipped with compare-and-swap for |KEY|, one
+should be able to implement sorting functions, guaranteeing the permutation
+property by construction.

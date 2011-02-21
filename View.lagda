@@ -4,6 +4,7 @@
 
 module View where
 open import VecFin
+open import Lambda
 
 \end{code}
 
@@ -75,3 +76,157 @@ another is a phenomenon new with dependent types, and it necessitates some
 thought about our programming notation, and also our selection of what programs
 to write. When we write functions to inspect data, we should ask what the types
 of those functions tell us about what the inspection will learn.
+
+
+\subsection{Finite Set Structure}
+
+%format finl = "\F{finl}"
+%format finr = "\F{finr}"
+
+The natural numbers can be thought of as names for finite types. We
+can equip these finite types with lots of useful structure.
+
+Let's start with the \emph{coproduct} structure, corresponding to
+addition. We can see |Fin (m +N n)| as the disjoint union of |Fin m|
+(at the left, low end of the range) and |Fin n| (at the right, high end
+of the range). Let us implement the injections. Firstly, |finl| embeds
+|Fin m|, preserving numerical value. I am careful to make the value of
+|m| visible, as you can't easily guess it from |m +N n|.
+
+\begin{code}
+finl : (m : Nat){n : Nat} -> Fin m -> Fin (m +N n)
+finl zero ()
+finl (suc m) zero = zero
+finl (suc m) (suc i) = suc (finl m i)
+\end{code}
+
+Secondly, |finr| embeds |Fin n| by shifting its values up by |m|.
+
+\begin{code}
+finr : (m : Nat){n : Nat} -> Fin n -> Fin (m +N n)
+finr zero i = i
+finr (suc m) i = suc (finr m i)
+\end{code}
+
+Injections leave the job half done\nudge{Landin: if a job's worth doing,
+it's worth half-doing.} We need to be able to tell them apart. We can
+certainly split |Fin (m +N n)| as a disjoint union.
+%format + = "\D{+}"
+%format _+_ = "\_\!" + "\!\_"
+%format inl = "\C{inl}"
+%format inr = "\C{inr}"
+\begin{code}
+data _+_ (S T : Set) : Set where
+  inl : S -> S + T
+  inr : T -> S + T
+\end{code}
+%format finlr = "\F{finlr}"
+\begin{code}
+finlr : (m : Nat){n : Nat} -> Fin (m +N n) -> Fin m + Fin n
+finlr zero     k                             = inr k
+finlr (suc m)  zero                          = inl zero
+finlr (suc m)  (suc k)  with  finlr m k 
+...                     |     inl i          = inl (suc i)
+...                     |     inr j          = inr j
+\end{code}
+However, that still leaves work undone. Here's another function of
+the same type.
+%format badlr = "\F{badlr}"
+\begin{code}
+badlr : (m : Nat){n : Nat} -> Fin (m +N n) -> Fin m + Fin n
+badlr zero     {zero}   ()
+badlr zero     {suc n}  _   = inr zero
+badlr (suc m)           _   = inl zero
+\end{code}
+As you can see, it ignores its argument, except where necessary to
+reject the input, and it returns the answer that's as far to the
+left as possible under the circumstances.
+
+The type of our testing function |finlr| makes no promise as to what
+the test will tell us about the value being tested. We compute a value
+in a disjoint union, but we \emph{learn} nothing about the values we
+already possess. There's still time to change all that. We can show
+that the |finl| and |finr| injections \emph{cover} |Fin (m +N n)| by
+consrtucting a \emph{view}.
+Firstly, let us state what it means to be in the image of |finl| or
+|finr|.
+%format FinSum = "\D{FinSum}"
+%format finSum = "\F{finSum}"
+%format isFinl = "\C{isFinl}"
+%format isFinr = "\C{isFinr}"
+\begin{code}
+data FinSum (m n : Nat) : Fin (m +N n) -> Set where
+  isFinl  : (i : Fin m) ->  FinSum m n (finl m i)
+  isFinr  : (j : Fin n) ->  FinSum m n (finr m j)
+\end{code}
+
+Then let us show that every element is in one image or the other.
+\begin{code}
+finSum : (m : Nat){n : Nat}(k : Fin (m +N n)) -> FinSum m n k
+finSum zero     k                                    = isFinr k
+finSum (suc m)  zero                                 = isFinl zero
+finSum (suc m)  (suc k)            with finSum m k
+finSum (suc m)  (suc .(finl m i))  | isFinl i        = isFinl (suc i)
+finSum (suc m)  (suc .(finr m j))  | isFinr j        = isFinr j
+\end{code}
+Note that the case analysis on the result of |finSum m k| exposes
+which injection made |k|, directly in the patterns.
+
+\subsection{|Fin|ish the Job}
+
+\begin{exe}[Products]
+Equip |Fin| with its product structure. Implement the constructor
+%format fpair = "\F{fpair}"
+\begin{spec}
+fpair : (m n : Nat) -> Fin m -> Fin n -> Fin (m *N n)
+\end{spec}
+then show that it covers by constructing the appropriate view.
+Use your view to implement the projections.
+\end{exe}
+
+\begin{exe}[Exponentials]
+Implement the exponential function for |Nat|.
+%format ^N = "\F{\hat{\,}^{N}}"
+%format _^N_ = "\_\!" ^N "\!\_"
+\begin{spec}
+_^N_ : Nat -> Nat -> Nat
+\end{spec}
+Now implement the abstraction operator which codifies the
+finitely many functions between |Fin m| and |Fin n|. (You know
+how to tabulate a function; you know that a vector, like an
+exponential, is an iterated product.)
+%format flam = "\F{flam}"
+\begin{spec}
+flam : (m n : Nat) -> (Fin m -> Fin n) -> Fin (n ^N m)
+\end{spec}
+Show that |flam| covers, and thus implement application. You
+will not be able to show that every function is given by applying
+a code, for that is true only up to an extensional equality which
+is not realised in Agda.
+\end{exe}
+
+\begin{exe}[Masochism] Implement dependent functions and pairs!
+\end{exe}
+
+
+\subsection{One Song to the Tune of Another (with James McKinna)}
+
+Let's define positive binary numbers as snoc-lists of bits.
+%format Bin = "\F{Bin}"
+\begin{code}
+Bin = Context Two
+\end{code}
+
+We can define a `one' and a `successor' operation for these numbers.
+%format bone = "\F{bone}"
+%format bsuc = "\F{bsuc}"
+\begin{code}
+bone : Bin
+bone = <>
+
+bsuc : Bin -> Bin
+bsuc <>        = <> , ff
+bsuc (b , ff)  = b , tt
+bsuc (b , tt)  = bsuc b , ff
+\end{code}
+

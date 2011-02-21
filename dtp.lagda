@@ -68,6 +68,8 @@
 \newcommand{\nudge}[1]{\marginpar{\footnotesize #1}}
 \newtheorem{exe}{Exercise}[chapter]
 
+%format rewrite = "\mathkw{rewrite}"
+
 \begin{document}
 
 \title{Dependently Typed Programming: \\ an Agda introduction}
