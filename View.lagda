@@ -230,3 +230,20 @@ bsuc (b , ff)  = b , tt
 bsuc (b , tt)  = bsuc b , ff
 \end{code}
 
+It's fun to write binary arithmetic operations, but our mission just
+now is to establish that we can still \emph{reason} about these numbers
+as we did with unary numbers. To do so, we must establish Peano's
+induction principle for binary numbers. That is, we need to implement
+the following:
+%format peanoBin = "\F{peanoBin}"
+\begin{spec}
+peanoBin :  (P : Bin -> Set) ->
+            (P bone) ->
+            ((b : Bin) -> P b -> P (bsuc b)) ->
+            (b : Bin) -> P b
+peanoBin P pone psuc = help where
+  help : (b : Bin) -> P b
+  help b = XX
+\end{spec}
+
+This goes horribly wrong. How to fix?

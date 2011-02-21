@@ -82,6 +82,8 @@
 
 %include View.lagda
 
+%include Generic.lagda
+
 \bibliographystyle{plainnat}
 \bibliography{dtp.bib}
 
