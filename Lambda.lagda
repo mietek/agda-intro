@@ -867,7 +867,7 @@ data LV : LCx -> LTy -> LCx -> Set where
 data LTm : LCx -> LTy -> LCx -> Set where
   var  : forall {Gam0 Gam1 T} ->   LV Gam0 T Gam1 -> LTm Gam0 T Gam1
   lam  : forall {Gam0 Gam1 S T} -> LTm (Gam0 , yes S) T (Gam1 , no) -> LTm Gam0 (S -o T) Gam1
-  _$_  : forall {Gam0 Gam1 Gam2 S T} -> LTm Gam0 (S -o T) Gam1 -> LTm Gam1 S Gam2 -> LTm Gam0 T Gam1
+  _$_  : forall {Gam0 Gam1 Gam2 S T} -> LTm Gam0 (S -o T) Gam1 -> LTm Gam1 S Gam2 -> LTm Gam0 T Gam2
 \end{code}
 
 Sorry folks, I've got to stop preparing this exercise and prepare the
