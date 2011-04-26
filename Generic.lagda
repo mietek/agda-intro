@@ -5,6 +5,7 @@
 module Generic where
 open import VecFin
 open import Lambda
+open import View
 
 \end{code}
 
@@ -46,6 +47,34 @@ _-N_ : (m n : Nat){p : TT (le n m)} -> Nat
 exampleSubtraction      :  Nat
 exampleSubtraction      =  42 -N 37
 
-exampleNonSubtraction   :  Nat
-exampleNonSubtraction   =  37 -N 42
+{-exampleNonSubtraction   :  Nat
+exampleNonSubtraction   =  37 -N 42-}
+\end{code}
+
+
+\subsection{Polynomials}
+
+The basic building blocks of ordinary first-order datatypes are
+\emph{polynomials}, describing how structures are built over elements
+by choice and pairing.
+
+\begin{code}
+data Poly : Set where
+  I           :                  Poly  -- the identity
+  Zero' One'  :                  Poly  -- constants
+  _+'_ _*'_   : (P Q : Poly) ->  Poly  -- choice and pairing
+\end{code}
+
+\begin{code}
+<_>P : Poly -> Set -> Set
+< I       >P  X  =  X
+< Zero'   >P  X  =  Zero
+< One'    >P  X  =  One
+< P +' Q  >P  X  =  < P >P X + < Q >P X
+< P *' Q  >P  X  =  < P >P X * < Q >P X
+\end{code}
+
+\begin{code}
+<_>p : (P : Poly) -> {X Y : Set} -> (X -> Y) -> < P >P X -> < P >P Y
+< P >p f x = ?
 \end{code}
